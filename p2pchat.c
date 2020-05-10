@@ -70,23 +70,50 @@ void broadcast(const char* message, int source_peer){
 // This thread function listens for messages and displays and broadcasts messages.
 void *listener_worker(){
   char buf[MAX_RAW_LEN];
+  struct   timeval tv;
   while(1){
-    for(int i=0; i < connections; i++){
-      if(peer_socket_fds[i] == -1) break;
-      int rd = read(peer_socket_fds[i], buf, MAX_RAW_LEN);
-      if(rd == 0) continue; // Nothing to be read
-      if(rd == -1){
-        perror("Could not receive message");
-        exit(EXIT_FAILURE);
+    // select timeout timeval
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    // initialize the fd_set to all zero
+    fd_set readFDs;
+    FD_ZERO(&readFDs);
+    // Set bits of relevant fd's
+    for (int i = 0; i < connections; i++){
+      FD_SET(peer_socket_fds[i], &readFDs);
+    }
+
+    // select for all fd's which have info to be read
+    int rc = select(peer_socket_fds[connections-1] + 1, &readFDs, NULL, NULL, &tv);
+    if(rc == -1){
+      perror("Unable to select");
+      exit(2);
+    }
+    if(rc == 0) continue;
+    // Loop through all fd's
+    for (int i=0; i < connections; i++){
+      // check which actually have data using FD_ISSET()
+      if (FD_ISSET(peer_socket_fds[i], &readFDs)){
+        if(peer_socket_fds[i] == -1) break;
+        // Reed from peer socket
+        int rd = read(peer_socket_fds[i], buf, MAX_RAW_LEN);
+        if(rd == 0) continue; // Nothing to be read
+        if(rd == -1){
+          perror("Could not receive message");
+          exit(EXIT_FAILURE);
+        }
+        // Unmarshal message
+        char rec_username[MAX_USERNAME_LEN+1], rec_message[MAX_MESSAGE_LEN+1];
+        memset(rec_username, '\0', sizeof(rec_username));
+        memset(rec_message, '\0', sizeof(rec_message));
+        const char *display_username = rec_username;
+        const char *display_msg = rec_message;
+        destringify_msg(rec_username, rec_message, buf);
+        // Display peer message
+        ui_display(display_username, display_msg);
+        // forward to all other peers
+        broadcast(buf, i);
       }
-      char rec_username[MAX_USERNAME_LEN+1], rec_message[MAX_MESSAGE_LEN+1];
-      memset(rec_username, '\0', sizeof(rec_username));
-      memset(rec_message, '\0', sizeof(rec_message));
-      const char *display_username = rec_username;
-      const char *display_msg = rec_message;
-      destringify_msg(rec_username, rec_message, buf);
-      ui_display(display_username, display_msg);
-      broadcast(buf, i);
     }
   }
 }
