@@ -8,10 +8,10 @@
 #include "socket.h"
 #include "ui.h"
 
-#define MAX_USERNAME_LEN 10
-#define MAX_MESSAGE_LEN 21
+#define MAX_USERNAME_LEN 50
+#define MAX_MESSAGE_LEN 400
 #define MAX_RAW_LEN MAX_USERNAME_LEN + MAX_MESSAGE_LEN + 2
-#define MAX_CONNECTIONS 3
+#define MAX_CONNECTIONS 20
 
 
 // Keep the username in a global so we can access it from the callback

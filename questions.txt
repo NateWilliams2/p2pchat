@@ -1,0 +1,7 @@
+What faults will cause your peer-to-peer chat network to fail? Are they related to machines or the network?
+
+Any un-defined activity, such as messages which are larger than MAX_MESSAGE_LEN or usernames which are too long, or more than MAX_CONNECTIONS connected to one peer, act in undefined ways and could crash the system. If any node loses network connection, all nodes further down the tree which receive information from this node would lose access to the network. These faults are related to both the activity of the machines and the reliability of the network. 
+
+One strategy for tolerating failures is replication. In this strategy, each peer connects to two existing peers instead of just one. How does this strategy help your chat network tolerate failures? What is challenging about the implementation of this strategy?
+
+This strategy would ensure that for any node, one of its two existing peers could fail and it would still receive information. The other peer would still be able to send information that the node could rely on. This strategy is hard to implement because the receiving node would need to identify duplicates and handle them. Additionally, it would need to pick a strategy for dealing with conflicts in ordering and integrity between its two peer nodes.
